@@ -3,7 +3,225 @@
   <head>
     <meta charset="UTF-8" />
     <title>PDF Export</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      body {
+        font-family: Inter, -apple-system, system-ui, sans-serif;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.9);
+        background: #2c2c2c;
+        height: 100vh;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      /* ── Header ── */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        height: 40px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+      }
+
+      .header-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+      }
+
+      .header-count {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* ── Content ── */
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 8px;
+      }
+
+      .content::-webkit-scrollbar { width: 4px; }
+      .content::-webkit-scrollbar-track { background: transparent; }
+      .content::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 2px;
+      }
+
+      /* ── Empty State ── */
+      .empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: rgba(255, 255, 255, 0.3);
+        font-size: 11px;
+        text-align: center;
+        gap: 12px;
+        user-select: none;
+      }
+
+      /* ── Frame List ── */
+      .frame-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        cursor: grab;
+        transition: background 80ms;
+        border: 1px solid transparent;
+      }
+
+      .frame-item:hover { background: rgba(255, 255, 255, 0.06); }
+      .frame-item:active { cursor: grabbing; }
+      .frame-item.dragging { opacity: 0.25; }
+
+      .frame-item.drag-over {
+        border-color: #0c8ce9;
+        background: rgba(12, 140, 233, 0.12);
+      }
+
+      .order-num {
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 4px;
+        flex-shrink: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .thumbnail {
+        width: 36px;
+        height: 28px;
+        object-fit: contain;
+        border-radius: 3px;
+        background: rgba(255, 255, 255, 0.06);
+        flex-shrink: 0;
+      }
+
+      .frame-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .frame-name {
+        font-size: 11px;
+        font-weight: 400;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.4;
+      }
+
+      .frame-size {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.3);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .drag-handle {
+        color: rgba(255, 255, 255, 0.15);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        padding: 2px;
+        transition: color 80ms;
+      }
+
+      .frame-item:hover .drag-handle { color: rgba(255, 255, 255, 0.4); }
+
+      /* ── Footer ── */
+      .footer {
+        padding: 10px 16px 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .status {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        line-height: 1.3;
+      }
+
+      .status:empty { display: none; }
+      .status.success { color: #14ae5c; }
+      .status.error { color: #f24822; }
+
+      /* ── Button ── */
+      button {
+        width: 100%;
+        height: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 6px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.9);
+        font-family: inherit;
+        font-size: 11px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 80ms, border-color 80ms;
+      }
+
+      button:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+
+      button:active:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      button:disabled {
+        border-color: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.2);
+        cursor: default;
+      }
+    </style>
   </head>
   <body>
+    <div class="container">
+      <div class="header">
+        <span class="header-title">Export</span>
+        <span class="header-count" id="count"></span>
+      </div>
+      <div class="content">
+        <div class="empty" id="empty">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+            <rect x="7" y="5" width="18" height="24" rx="2" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" fill="none"/>
+            <rect x="15" y="11" width="18" height="24" rx="2" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" fill="#2c2c2c"/>
+            <path d="M21 19v8M17 23h8" stroke="rgba(255,255,255,0.2)" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          Select frames to export
+        </div>
+        <div id="frame-list"></div>
+      </div>
+      <div class="footer">
+        <div class="status" id="status"></div>
+        <button id="export" disabled>Export PDF</button>
+      </div>
+    </div>
   </body>
 </html>
