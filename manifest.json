@@ -1,6 +1,6 @@
 {
   "name": "PDF Export",
-  "id": "pdf-export-plugin",
+  "id": "1628036873852004960",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html",
