@@ -170,6 +170,46 @@
       .status.success { color: #14ae5c; }
       .status.error { color: #f24822; }
 
+      /* ── Quality ── */
+      .quality-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .quality-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+      }
+
+      .quality-value {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.9);
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type='range'] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        cursor: pointer;
+        margin: 2px 0;
+      }
+
+      input[type='range']::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #0c8ce9;
+        cursor: pointer;
+      }
+
       /* ── Button ── */
       button {
         width: 100%;
@@ -219,6 +259,11 @@
         <div id="frame-list"></div>
       </div>
       <div class="footer">
+        <div class="quality-row">
+          <label class="quality-label" for="quality">Image quality</label>
+          <span class="quality-value" id="quality-value">Original</span>
+        </div>
+        <input type="range" id="quality" min="5" max="100" step="5" value="100" />
         <div class="status" id="status"></div>
         <button id="export" disabled>Export PDF</button>
       </div>
